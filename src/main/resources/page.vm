@@ -1,0 +1,18 @@
+<head>
+<script src='https://www.google.com/recaptcha/api.js'></script>
+</head>
+<body style=background-color:aqua>
+
+<div style="margin:  auto; width: 500px;text-align:center">
+<h1 style="">FREE IOTA FAUCET</h1>
+<h3 style="color:gray;">Version: $version</h2>
+<form action="/confirm"  method ="post">
+    <div style="display: inline-block;" class="g-recaptcha" data-sitekey="6LfkxgMTAAAAAKl8v_25oEQ4VxQOmEEgG1lsBbYa"></div>
+    <br>
+  Wallet Address -
+  <input type="text" name="address">
+  <br><br>
+  <input type="submit" value="Receive IOTA">
+</form>
+</div>
+</body>
