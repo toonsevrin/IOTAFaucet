@@ -5,10 +5,12 @@ import com.mongodb.MongoClientURI;
 import com.sevrin.toon.IOTAFaucet.database.DatabaseProvider;
 import com.sevrin.toon.IOTAFaucet.database.MongoDatabaseProvider;
 import com.sevrin.toon.IOTAFaucet.iota.IotaProvider;
+import com.sevrin.toon.IOTAFaucet.web.Backend;
 import com.sevrin.toon.IOTAFaucet.web.Frontend;
 import jota.IotaAPI;
 
 import java.net.URI;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by toonsev on 6/10/2017.
@@ -20,8 +22,23 @@ public class Bootstrap {
         IotaAPI iotaAPI = new IotaAPI.Builder().protocol(nodeAddress.getScheme()).host(nodeAddress.getHost()).port(nodeAddress.getPort() + "").build();
         DatabaseProvider databaseProvider = loadDatabaseProvider();
         IotaProvider iotaProvider = new IotaProvider(iotaAPI, "");
-        IOTAFaucet iotaFaucet = new IOTAFaucet(iotaAPI);
-        Frontend.setup(iotaFaucet);
+        Backend backend = new Backend(iotaProvider, databaseProvider, new FaucetConfig() {
+            @Override
+            public long getMinPayoutBalance() {
+                return 20;
+            }
+
+            @Override
+            public long getIntervalInMillis() {
+                return TimeUnit.MINUTES.toMillis(1);
+            }
+
+            @Override
+            public long getBalanceIncPerRequest() {
+                return 10;
+            }
+        });
+        Frontend.setup(backend);
     }
 
     public static String getEnv(String env) {

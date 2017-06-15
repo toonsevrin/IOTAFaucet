@@ -1,6 +1,6 @@
 package com.sevrin.toon.IOTAFaucet.iota;
 
-import com.sevrin.toon.IOTAFaucet.res.PowableTransaction;
+import com.sevrin.toon.IOTAFaucet.web.PowableTransaction;
 import jota.IotaAPI;
 import jota.dto.response.GetTransactionsToApproveResponse;
 import jota.error.*;
@@ -22,7 +22,7 @@ public class IotaProvider {
         this.seed = seed;
     }
 
-    public PowableTransaction prepareTransaction(String address, int amount) throws InvalidSecurityLevelException, InvalidAddressException, InvalidTransferException, NotEnoughBalanceException {
+    public PowableTransaction prepareTransaction(String address, long amount) throws InvalidSecurityLevelException, InvalidAddressException, InvalidTransferException, NotEnoughBalanceException {
         List<Transfer> transfers = new ArrayList<>();
         Transfer transfer = new Transfer(address, amount, "LATESTPAYMENT", TAG);
         transfers.add(transfer);

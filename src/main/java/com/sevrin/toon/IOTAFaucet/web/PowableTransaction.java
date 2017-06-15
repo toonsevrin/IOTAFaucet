@@ -1,4 +1,4 @@
-package com.sevrin.toon.IOTAFaucet.res;
+package com.sevrin.toon.IOTAFaucet.web;
 
 /**
  * Created by toonsev on 6/12/2017.

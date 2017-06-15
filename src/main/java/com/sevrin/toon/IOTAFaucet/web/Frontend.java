@@ -1,6 +1,5 @@
 package com.sevrin.toon.IOTAFaucet.web;
 
-import com.sevrin.toon.IOTAFaucet.IOTAFaucet;
 import spark.ModelAndView;
 import spark.Spark;
 import spark.template.velocity.VelocityTemplateEngine;
@@ -14,12 +13,12 @@ import static spark.Spark.port;
  * Created by toonsev on 6/10/2017.
  */
 public class Frontend {
-    public static void setup(IOTAFaucet faucet) {
+    public static void setup(Backend faucet) {
         int port = System.getenv().containsKey("port") ? Integer.valueOf(System.getenv("port")) : 80;
         port(port);
         Spark.get("/", (request, response) -> {
             Map<String, Object> model = new HashMap<>();
-            model.put("version", IOTAFaucet.VERSION);
+            model.put("version", Backend.VERSION);
             return new VelocityTemplateEngine().render(new ModelAndView(model, "page.vm"));
         });
 
@@ -27,7 +26,7 @@ public class Frontend {
             String res = request.headers("g-recaptcha-response");
             System.out.println(res);
             Map<String, Object> model = new HashMap<>();
-            model.put("version", IOTAFaucet.VERSION);
+            model.put("version", Backend.VERSION);
             return new VelocityTemplateEngine().render(new ModelAndView(model, "confirm.vm"));
         });
     }

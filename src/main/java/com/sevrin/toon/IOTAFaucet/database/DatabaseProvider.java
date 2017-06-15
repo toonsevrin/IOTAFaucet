@@ -1,12 +1,12 @@
 package com.sevrin.toon.IOTAFaucet.database;
 
-import com.sevrin.toon.IOTAFaucet.res.User;
+import com.sevrin.toon.IOTAFaucet.User;
 
 /**
  * Created by toonsev on 6/12/2017.
  */
 public interface DatabaseProvider {
-    boolean canReceiveTokens(User user, long intervalInMillis);
+    Long getLastTokensReceived(User user);
 
     void setTokensReceived(User user);
 

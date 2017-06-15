@@ -4,7 +4,7 @@ import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.UpdateOptions;
-import com.sevrin.toon.IOTAFaucet.res.User;
+import com.sevrin.toon.IOTAFaucet.User;
 import org.bson.Document;
 
 import static com.mongodb.client.model.Updates.inc;
@@ -28,24 +28,22 @@ public class MongoDatabaseProvider implements DatabaseProvider {
 
     }
 
-    //usage
 
     @Override
-    public boolean canReceiveTokens(User user, long intervalInMillis) {
-        Document addressDoc = usageCollection.find(new Document("address", user.getWalletAddress())).first();
-        if (!canReceiveTokensFromDoc(addressDoc, intervalInMillis))
-            return false;
-        Document ipDoc = usageCollection.find(new Document("ip", user.getIpAddress())).first();
-        if (!canReceiveTokensFromDoc(ipDoc, intervalInMillis))
-            return false;
-        return true;
+    public Long getLastTokensReceived(User user) {
+        Long addressLastUsage = getLastUsageFromDoc(usageCollection.find(new Document("address", user.getWalletAddress())).first());
+        Long ipLastUsage = getLastUsageFromDoc(usageCollection.find(new Document("ip", user.getIpAddress())).first());
+        if (addressLastUsage != null && ipLastUsage != null)//return the largest of the two, the most recent usage
+            return addressLastUsage > ipLastUsage ? addressLastUsage : ipLastUsage;
+        if (addressLastUsage != null)
+            return addressLastUsage;
+        return ipLastUsage;
     }
 
-    private boolean canReceiveTokensFromDoc(Document usageDoc, long intervalInMillis) {
+    private Long getLastUsageFromDoc(Document usageDoc) {
         if (usageDoc != null && usageDoc.containsKey("lastUsage"))
-            if (usageDoc.getLong("lastUsage") + intervalInMillis > System.currentTimeMillis())
-                return false;
-        return true;
+            return usageDoc.getLong("lastUsage");
+        return null;
     }
 
     @Override
