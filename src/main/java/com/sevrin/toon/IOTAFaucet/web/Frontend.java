@@ -1,5 +1,6 @@
-package com.sevrin.toon.IOTAFaucet;
+package com.sevrin.toon.IOTAFaucet.web;
 
+import com.sevrin.toon.IOTAFaucet.IOTAFaucet;
 import spark.ModelAndView;
 import spark.Spark;
 import spark.template.velocity.VelocityTemplateEngine;
@@ -14,7 +15,7 @@ import static spark.Spark.port;
  */
 public class Frontend {
     public static void setup(IOTAFaucet faucet) {
-        int port = System.getenv().containsKey("port") ? Integer.valueOf(System.getenv("port")) : null;
+        int port = System.getenv().containsKey("port") ? Integer.valueOf(System.getenv("port")) : 80;
         port(port);
         Spark.get("/", (request, response) -> {
             Map<String, Object> model = new HashMap<>();
