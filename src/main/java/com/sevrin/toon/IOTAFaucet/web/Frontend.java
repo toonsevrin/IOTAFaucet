@@ -19,15 +19,25 @@ public class Frontend {
         Spark.get("/", (request, response) -> {
             Map<String, Object> model = new HashMap<>();
             model.put("version", Backend.VERSION);
+            //TODO: Implement the following
             return new VelocityTemplateEngine().render(new ModelAndView(model, "page.vm"));
         });
 
-        Spark.post("/confirm", (request, response) -> {
-            String res = request.headers("g-recaptcha-response");
-            System.out.println(res);
+        Spark.post("/confirm", (request, response) -> {//the browser sends a confirm
+            String reCaptcha = request.headers("g-recaptcha-response");
+            System.out.println(reCaptcha);
+            String walletAddress = request.queryParams("walletAddress");
+            //TODO: Implement the following
             Map<String, Object> model = new HashMap<>();
             model.put("version", Backend.VERSION);
             return new VelocityTemplateEngine().render(new ModelAndView(model, "confirm.vm"));
+        });
+
+        Spark.post("/sendTransaction", (request, response) -> {//the browser sends the PoWed transactionTrytes to the server
+            String trytes = request.queryParams("trytes");
+            //TODO: Implement the following
+            Map<String, Object> model = new HashMap<>();
+            return new VelocityTemplateEngine().render(new ModelAndView(model, "sendTransaction.vm"));
         });
     }
 }
