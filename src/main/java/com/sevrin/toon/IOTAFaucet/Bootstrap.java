@@ -21,7 +21,7 @@ public class Bootstrap {
 
         IotaAPI iotaAPI = new IotaAPI.Builder().protocol(nodeAddress.getScheme()).host(nodeAddress.getHost()).port(nodeAddress.getPort() + "").build();
         DatabaseProvider databaseProvider = loadDatabaseProvider();
-        IotaProvider iotaProvider = new IotaProvider(iotaAPI, "");
+        IotaProvider iotaProvider = new IotaProvider(iotaAPI, getEnv("SEED"));
         Backend backend = new Backend(iotaProvider, databaseProvider, new FaucetConfig() {
             @Override
             public long getMinPayoutBalance() {
