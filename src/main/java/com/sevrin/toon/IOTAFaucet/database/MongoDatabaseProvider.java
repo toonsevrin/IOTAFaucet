@@ -79,4 +79,9 @@ public class MongoDatabaseProvider implements DatabaseProvider {
     public void setLastKnownAddressIndex(String seed, int index) {
         addressCacheCollection.updateOne(new Document("_id", seed), set("lastIndex", index), new UpdateOptions().upsert(true));
     }
+
+    @Override
+    public CurrentTransaction getCurrentTransaction() {
+        return null;
+    }
 }

@@ -20,6 +20,7 @@ public class Frontend {
             Map<String, Object> model = new HashMap<>();
             model.put("version", Backend.VERSION);
             //TODO: Implement the following
+            
             return new VelocityTemplateEngine().render(new ModelAndView(model, "page.vm"));
         });
 

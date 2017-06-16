@@ -5,7 +5,6 @@ import com.mongodb.MongoClientURI;
 import com.sevrin.toon.IOTAFaucet.database.DatabaseProvider;
 import com.sevrin.toon.IOTAFaucet.database.MongoDatabaseProvider;
 import com.sevrin.toon.IOTAFaucet.iota.IotaProvider;
-import com.sevrin.toon.IOTAFaucet.web.Backend;
 import com.sevrin.toon.IOTAFaucet.web.Frontend;
 import jota.IotaAPI;
 

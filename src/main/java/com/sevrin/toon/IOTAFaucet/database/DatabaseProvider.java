@@ -10,11 +10,44 @@ public interface DatabaseProvider {
 
     void setTokensReceived(User user);
 
-    long getBalance(String walletAddress);
-
-    void incBalance(String walletAddress, long balance);
 
     Integer getLastKnownAddressIndex(String seed);
 
-    void setLastKnownAddressIndex(String seed, int index);
+    void setLastKnownAddressIndex(String seed, long index);
+
+    StoredTransaction getTransaction(String transactionId);
+
+    /**
+     * [startTimestamp, stopTimestamp[
+     *
+     * @param startTimestamp
+     * @param stopTimestamp
+     * @return
+     */
+    Iterable<StoredTransaction> getTransactionsWithinRange(long startTimestamp, long stopTimestamp);
+
+    StoredTransaction addTransaction(String walletAddress, long amount);
+
+    StoredTransaction getNextSortedTransaction(long minTimestamp, long maxTimestamp, String prevTransactionId);
+
+    StoredBundle getResponsibleBundle(long timestamp);
+
+    StoredBundle getCurrentBundle();
+
+    StoredBundle getBundleByTransaction(String transaction);
+
+    StoredBundle getBundleByBundleId(long bundleId);
+
+    Iterable<StoredBundle> getStoppedBundles(boolean send, boolean confirmed);
+
+    boolean confirmBundle(long bundleIndex);
+
+    boolean startBundle(long bundleIndex, String startTx, String startState);
+
+    boolean updateCurrentInBundle(String previousTx, String nextTx, String nextTxState);
+
+    boolean stopBundle(String lastTransaction);
+
+    boolean sendBundle(long bundleIndex);
+
 }
