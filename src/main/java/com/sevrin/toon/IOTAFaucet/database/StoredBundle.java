@@ -1,25 +1,52 @@
 package com.sevrin.toon.IOTAFaucet.database;
 
 
+import org.mongodb.morphia.annotations.*;
+
 /**
  * Created by toonsev on 6/16/2017.
  */
+@Entity("bundles")
+@Indexes({
+        @Index(value = "bundleId", fields = @Field("bundleId")),
+        @Index(value = "processorId", fields = @Field("processorId")),
+        @Index(value = "currentTransaction", fields = @Field("currentTransaction")),
+        @Index(value = "sent", fields = @Field("sent")),
+        @Index(value = "confirmed", fields = @Field("confirmed")),
+        @Index(value = "started", fields = @Field("started")),
+        @Index(value = "stopped", fields = @Field("stopped"))}
+)
+
 public class StoredBundle {
+    @Id
     private String uniqueId;
+    @Property("bundleId")
     private long bundleId;
-    private Long started;
-    private Long stopped;
-    private String processor;
+    @Property("processorId")
+    private String processorId;
+    @Property("currentTransaction")
     private String currentTransaction;
+    @Property("started")
+    private Long started;
+    @Property("stopped")
+    private Long stopped;
+    @Property("sent")
     private Long sent;
+    @Property("confirmed")
     private Long confirmed;
 
+    @Property("branch")
     private String branch;
+    @Property("trunk")
     private String trunk;
+    //this is for transaction bump spamming
+    @Property("lastTransaction")
     private String lastTransaction;
+    @Property("lastSpammed")
     private Long lastSpammed;
 
-    public StoredBundle() {}
+    public StoredBundle() {
+    }
 
     public StoredBundle(long bundleId) {
         this.bundleId = bundleId;
@@ -39,7 +66,7 @@ public class StoredBundle {
 
 
     public String getProcessor() {
-        return processor;
+        return processorId;
     }
 
     public String getCurrentTransaction() {

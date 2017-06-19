@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class Backend {
     public static final String VERSION = "v0.0.1";
-    
+
     private final Scheduler scheduler = Schedulers.io();
     private IotaProvider iotaProvider;
     private DatabaseProvider databaseProvider;
@@ -70,7 +70,8 @@ public class Backend {
             return;
         }
         ProcessorTransaction transaction = databaseProvider.getProcessorTransaction(bundle.getProcessor(), bundle.getCurrentTransaction());
-        int[] validatedState = iotaProvider.validateTransaction(doWorkRes.getHash(), transaction.getState(), 15);
+
+        int[] validatedState = iotaProvider.validateTransaction(doWorkRes.getHash(), transaction.getState(), transaction.getMinWeightMagnitude());
         if (validatedState == null) {
             System.out.println("Received doworkres with invalid hash");
             return;

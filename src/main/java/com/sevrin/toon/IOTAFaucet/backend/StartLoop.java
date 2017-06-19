@@ -2,6 +2,7 @@ package com.sevrin.toon.IOTAFaucet.backend;
 
 import com.sevrin.toon.IOTAFaucet.database.DatabaseProvider;
 import com.sevrin.toon.IOTAFaucet.database.ProcessorTransaction;
+import com.sevrin.toon.IOTAFaucet.database.StoredBundle;
 import com.sevrin.toon.IOTAFaucet.database.StoredTransaction;
 import com.sevrin.toon.IOTAFaucet.iota.IotaProvider;
 import jota.dto.response.GetTransactionsToApproveResponse;
@@ -78,25 +79,23 @@ public class StartLoop implements Runnable {
         }
     }
 
+    //todo check if this method is safe with multiple processes
     private void startBundle(String processorId, String branch, String trunk) {
-        Integer id = databaseProvider.getLastConfirmedBundleId();
-        id = id == null ? 0 : id + 1;//increment last id by one, or set it to 0 if this is first bundle
+        StoredBundle bundle = databaseProvider.getLastConfirmedBundle();
+        long bundleId = bundle == null ? 0 : bundle.getBundleId() + 1;//increment last id by one, or set it to 0 if this is first bundle
         ProcessorTransaction first = databaseProvider.getNextProcessorTransaction(processorId, null);
-        boolean started = databaseProvider.startBundle(id, first.getUniqueId(), first.getState(), branch, trunk);
+        boolean started = databaseProvider.startBundle(bundleId, processorId, first.getUniqueId(), branch, trunk);
         if (started) {
-            System.out.println("Started bundle " + id);
+            System.out.println("Started bundle " + bundleId);
         } else
-            System.out.println("Failed to start bundle:" + id);
+            System.out.println("Failed to start bundle:" + bundleId);
 
     }
 
     private ProcessorTransaction fromTrytes(String processorId, String trytes, String transactionId) {
-        return new ProcessorTransaction(trytes, getState(trytes), transactionId, processorId);
+        return new ProcessorTransaction(trytes, Utils.trytesToStateMatrix(trytes), transactionId, processorId);
     }
 
-    private String getState(String trytes) {
-        return "";//todo: implement
-    }
 
     private Transfer fromStoredTransaction(StoredTransaction storedTransaction) {
         return new Transfer(storedTransaction.getWalletAddress(), storedTransaction.getAmount(), TAG, TAG);

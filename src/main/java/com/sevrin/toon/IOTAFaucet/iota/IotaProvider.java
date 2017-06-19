@@ -2,8 +2,6 @@ package com.sevrin.toon.IOTAFaucet.iota;
 
 import com.sevrin.toon.IOTAFaucet.database.StoredTransaction;
 import jota.IotaAPI;
-import jota.dto.response.FindTransactionResponse;
-import jota.dto.response.GetNewAddressResponse;
 import jota.dto.response.GetTransactionsToApproveResponse;
 import jota.error.*;
 import jota.model.Input;

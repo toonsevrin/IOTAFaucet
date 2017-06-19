@@ -68,6 +68,13 @@
     </repositories>
     <dependencies>
         <dependency>
+            <groupId>org.mongodb.morphia</groupId>
+            <artifactId>morphia</artifactId>
+            <version>1.3.2</version>
+        </dependency>
+
+
+        <dependency>
             <groupId>com.github.iotaledger</groupId>
             <artifactId>iota.lib.java</artifactId>
             <version>ebe81b22c2</version>

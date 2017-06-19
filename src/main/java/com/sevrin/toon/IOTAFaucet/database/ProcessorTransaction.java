@@ -1,18 +1,37 @@
 package com.sevrin.toon.IOTAFaucet.database;
 
+import org.mongodb.morphia.annotations.*;
+
 /**
  * Created by toonsev on 6/17/2017.
  */
+@Entity("processorTransaction")
+@Indexes({
+        @Index(value = "processorId", fields = @Field("processorId")),
+        @Index(value = "transactionId", fields = @Field("transactionId"))}
+)
 public class ProcessorTransaction {
+    @Id
     private String uniqueId;
+    @Property("processorId")
     private String processorId;
+    @Property("trytes")
     private String trytes;
+    @Property("state")
     private String state;
-    private String hashedTrytes;
+    @Property("hashedState")
+    private String hashedState;
     //linked transaction if a transaction exists, note that this does not exist on the remainer transaction
+
+    @Property("transactionId")
     private String transactionId;
-    private String lastBranch;
+    @Property("lastBranch")
+    private String lastBranch;//make sure this is set and saved.
+    @Property("branchLastUpdated")
     private Long branchLastUpdated;
+
+    @Property("minWeightMagnitude")
+    private int minWeightMagnitude = 15;
 
     public ProcessorTransaction() {
     }
@@ -39,8 +58,8 @@ public class ProcessorTransaction {
         return state;
     }
 
-    public String getHashedTrytes() {
-        return hashedTrytes;
+    public String getHashedState() {
+        return hashedState;
     }
 
     public String getLastBranch() {
@@ -57,6 +76,10 @@ public class ProcessorTransaction {
 
     public void setState(String state) {
         this.state = state;
+    }
+
+    public int getMinWeightMagnitude() {
+        return minWeightMagnitude;
     }
 
     public Long getBranchLastUpdated() {
