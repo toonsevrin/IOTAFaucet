@@ -1,4 +1,4 @@
-package com.sevrin.toon.IOTAFaucet.beta;
+package com.sevrin.toon.IOTAFaucet.backend;
 
 import com.sevrin.toon.IOTAFaucet.database.StoredTransaction;
 

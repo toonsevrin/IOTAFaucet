@@ -26,9 +26,10 @@ public interface DatabaseProvider {
      */
     Iterable<StoredTransaction> getTransactionsWithinRange(long startTimestamp, long stopTimestamp);
 
+    Iterable<StoredTransaction> getTransactionsSinceLastBundle();
+
     StoredTransaction addTransaction(String walletAddress, long amount);
 
-    StoredTransaction getNextSortedTransaction(long minTimestamp, long maxTimestamp, String prevTransactionId);
 
     StoredBundle getResponsibleBundle(long timestamp);
 
@@ -36,18 +37,41 @@ public interface DatabaseProvider {
 
     StoredBundle getBundleByTransaction(String transaction);
 
+    StoredBundle getBundleByProcessorId(String processorId);
+
     StoredBundle getBundleByBundleId(long bundleId);
 
     Iterable<StoredBundle> getStoppedBundles(boolean send, boolean confirmed);
 
+    Iterable<ProcessorTransaction> getProcessorTransactions(String processor);
+
+    Integer getLastConfirmedBundleId();
+
+    boolean saveProcessorTransaction(Iterable<ProcessorTransaction> processorTransactions);
+
+    ProcessorTransaction getProcessorTransaction(String processor, String transactionId);
+
+    //prevTransactionId is nullable for first
+    ProcessorTransaction getNextProcessorTransaction(String processor, String prevTransactionId);
+
     boolean confirmBundle(long bundleIndex);
 
-    boolean startBundle(long bundleIndex, String startTx, String startState);
+    boolean startBundle(long bundleIndex, String startTx, String startState, String branch, String trunk);
 
-    boolean updateCurrentInBundle(String previousTx, String nextTx, String nextTxState);
+    boolean updateCurrentInBundle(long bundleIndex, String previousTx, String nextTx);
 
-    boolean stopBundle(String lastTransaction);
+    boolean updateProcessorTransactionTrytes(String processorId, String processorTransactionid, String oldTrytes, String newTrytes, String newState);
+    boolean setHashedProcessorTransactionState(String processorId, String processorTransactionId, String oldState, String hashedState);
+
+    //also sets the 'StoredBundle#lastTransaction' for bump spamming
+    boolean stopBundle(long bundleIndex, String lastTransaction);
 
     boolean sendBundle(long bundleIndex);
+
+    ProcessorTransaction getTransactionWithLastBranch(String processorId);
+
+    boolean setLastSpammed(long bundleIndex, String previousTransaction, String currentTransaction);
+
+    boolean allBundlesAreConfirmed();
 
 }

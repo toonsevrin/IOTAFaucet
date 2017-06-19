@@ -6,41 +6,71 @@ package com.sevrin.toon.IOTAFaucet.database;
  */
 public class StoredBundle {
     private String uniqueId;
-    private long bundleIndex;
+    private long bundleId;
     private Long started;
     private Long stopped;
+    private String processor;
     private String currentTransaction;
-    private String currentState;
-    private Boolean send;
-    private Boolean confirmed;
+    private Long sent;
+    private Long confirmed;
+
+    private String branch;
+    private String trunk;
+    private String lastTransaction;
+    private Long lastSpammed;
 
     public StoredBundle() {}
 
-    public StoredBundle(long bundleIndex) {
-        this.bundleIndex = bundleIndex;
+    public StoredBundle(long bundleId) {
+        this.bundleId = bundleId;
     }
 
     public String getUniqueId() {
         return uniqueId;
     }
 
-    public long getBundleIndex() {
-        return bundleIndex;
+    public long getBundleId() {
+        return bundleId;
     }
 
     public Long getStarted() {
         return started;
     }
 
+
+    public String getProcessor() {
+        return processor;
+    }
+
+    public String getCurrentTransaction() {
+        return currentTransaction;
+    }
+
+    public Long getSent() {
+        return sent;
+    }
+
+    public String getLastTransaction() {
+        return lastTransaction;
+    }
+
     public Long getStopped() {
         return stopped;
     }
 
-    public Boolean getSend() {
-        return send;
+    public String getBranch() {
+        return branch;
     }
 
-    public Boolean getConfirmed() {
+    public String getTrunk() {
+        return trunk;
+    }
+
+    public Long getLastSpammed() {
+        return lastSpammed;
+    }
+
+    public Long getConfirmed() {
         return confirmed;
     }
 }
