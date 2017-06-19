@@ -17,6 +17,8 @@ import java.util.concurrent.TimeUnit;
  * Created by toonsev on 6/18/2017.
  */
 public class Backend {
+    public static final String VERSION = "v0.0.1";
+    
     private final Scheduler scheduler = Schedulers.io();
     private IotaProvider iotaProvider;
     private DatabaseProvider databaseProvider;
@@ -116,7 +118,7 @@ public class Backend {
         }
     }
 
-    private long getPayoutPerRequest(){
+    private long getPayoutPerRequest() {
         //possibly some randomness here
         return faucetConfig.getPayoutPerRequest();
     }

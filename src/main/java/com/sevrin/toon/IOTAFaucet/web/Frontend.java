@@ -1,5 +1,6 @@
 package com.sevrin.toon.IOTAFaucet.web;
 
+import com.sevrin.toon.IOTAFaucet.backend.Backend;
 import spark.ModelAndView;
 import spark.Spark;
 import spark.template.velocity.VelocityTemplateEngine;
