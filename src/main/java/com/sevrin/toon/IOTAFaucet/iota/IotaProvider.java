@@ -125,6 +125,11 @@ public class IotaProvider {
         return iotaAPI.prepareTransfers(seed, 2, transfers, remainderAddress, inputs);
     }
 
+    //TODO: Implement
+    public String trytesToStateMatrix(String trytes){
+        return "";
+    }
+
     public String getSeed() {
         return seed;
     }

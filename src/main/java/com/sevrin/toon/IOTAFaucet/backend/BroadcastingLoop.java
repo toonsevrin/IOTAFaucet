@@ -37,7 +37,7 @@ public class BroadcastingLoop implements Runnable {
                     Transaction transaction = new Transaction(oldTrytes);
                     transaction.setBranchTransaction(branch);
                     String newTrytes = transaction.toTrytes();
-                    String newState = Utils.trytesToStateMatrix(newTrytes);
+                    String newState = iotaProvider.trytesToStateMatrix(newTrytes);
                     boolean updated = databaseProvider.updateProcessorTransactionTrytes(bundle.getProcessor(), currentTransaction.getTransactionId(), oldTrytes, newTrytes, newState);
                     if (updated) {
                         System.out.println("Sucessfully updated branch of last processorTransaction in bundle (these should be fresh)");

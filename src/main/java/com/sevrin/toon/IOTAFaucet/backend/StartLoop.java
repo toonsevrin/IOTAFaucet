@@ -93,7 +93,7 @@ public class StartLoop implements Runnable {
     }
 
     private ProcessorTransaction fromTrytes(String processorId, String trytes, String transactionId) {
-        return new ProcessorTransaction(trytes, Utils.trytesToStateMatrix(trytes), transactionId, processorId);
+        return new ProcessorTransaction(trytes, iotaProvider.trytesToStateMatrix(trytes), transactionId, processorId);
     }
 
 
