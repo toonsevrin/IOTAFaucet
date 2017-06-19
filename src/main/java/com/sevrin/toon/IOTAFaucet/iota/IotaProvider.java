@@ -30,6 +30,14 @@ public class IotaProvider {
         this.seed = seed;
     }
 
+
+    public int[] getTrytesWithHash(int[] originalTrytes, int[] hash) {
+        int[] toReturn = new int[originalTrytes.length];//no sideeffects
+        System.arraycopy(originalTrytes, 0, toReturn, 0, originalTrytes.length);
+        System.arraycopy(hash, 0, toReturn, originalTrytes.length - 81, 81);
+        return toReturn;
+    }
+
     public int[] validateTransaction(String hash, final String state, int minWeightMagnitude) {
         int[] hashTrits = Converter.trits(hash);
         int[] stateArray = Converter.trits(state);
@@ -126,7 +134,7 @@ public class IotaProvider {
     }
 
     //TODO: Implement
-    public String trytesToStateMatrix(String trytes){
+    public String trytesToStateMatrix(String trytes) {
         return "";
     }
 

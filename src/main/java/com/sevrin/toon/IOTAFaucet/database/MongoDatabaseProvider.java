@@ -181,12 +181,12 @@ public class MongoDatabaseProvider implements DatabaseProvider {
     }
 
     @Override
-    public boolean setHashedProcessorTransactionState(String processorId, String processorTransactionId, String oldState, String hashedState) {
+    public boolean setHashedProcessorTransactionTrytes(String processorId, String processorTransactionId, String oldState, String hashedTrytes) {
         Query<ProcessorTransaction> query = datastore.createQuery(ProcessorTransaction.class).field("_id").equal(processorTransactionId)
                 .field("processorId").equal(processorId)
                 .field("state").equal(oldState);
         UpdateOperations<ProcessorTransaction> updateOperations = datastore.createUpdateOperations(ProcessorTransaction.class)
-                .set("hashedState", hashedState);
+                .set("hashedTrytes", hashedTrytes);
         return datastore.update(query, updateOperations).getUpdatedCount() > 0;
     }
 

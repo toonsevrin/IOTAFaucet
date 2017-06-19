@@ -76,8 +76,9 @@ public class Backend {
             System.out.println("Received doworkres with invalid hash");
             return;
         }
-        String validatedStateTrytes = Converter.trytes(validatedState);
-        boolean updatedHash = databaseProvider.setHashedProcessorTransactionState(transaction.getProcessorId(), transaction.getUniqueId(), transaction.getState(), validatedStateTrytes);
+        String hashedTrytes = Converter.trytes(iotaProvider.getTrytesWithHash(Converter.trits(transaction.getTrytes()), Converter.trits(doWorkRes.getHash())));
+
+        boolean updatedHash = databaseProvider.setHashedProcessorTransactionTrytes(transaction.getProcessorId(), transaction.getUniqueId(), transaction.getState(), hashedTrytes);
         if (updatedHash) {
             System.out.println("Saved transaction hash " + doWorkRes.getHash() + "to database.");
             ProcessorTransaction nextTransaction = databaseProvider.getNextProcessorTransaction(bundle.getProcessor(), bundle.getCurrentTransaction());

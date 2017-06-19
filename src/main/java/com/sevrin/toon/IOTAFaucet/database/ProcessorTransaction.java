@@ -19,8 +19,8 @@ public class ProcessorTransaction {
     private String trytes;
     @Property("state")
     private String state;
-    @Property("hashedState")
-    private String hashedState;
+    @Property("hashedTrytes")
+    private String hashedTrytes;
     //linked transaction if a transaction exists, note that this does not exist on the remainer transaction
 
     @Property("transactionId")
@@ -58,8 +58,8 @@ public class ProcessorTransaction {
         return state;
     }
 
-    public String getHashedState() {
-        return hashedState;
+    public String getHashedTrytes() {
+        return hashedTrytes;
     }
 
     public String getLastBranch() {

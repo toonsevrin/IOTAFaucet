@@ -40,7 +40,7 @@ public class RestartBundleLoop implements Runnable {
         String lastTransaction = storedBundle.getLastTransaction();
         String newSpam = getNewSpammedTransaction();//TODO: Implement this
         if (newSpam != null)
-            databaseProvider.setLastSpammed(storedBundle.getBundleId(), lastTransaction, newSpam);
+            databaseProvider.setLastSpammed(storedBundle.getBundleId(), storedBundle.getLastSpammed());
     }
 
     private String getNewSpammedTransaction() {

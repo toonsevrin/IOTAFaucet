@@ -45,7 +45,7 @@ public interface DatabaseProvider {
 
     boolean updateProcessorTransactionTrytes(String processorId, String processorTransactionid, String oldTrytes, String newTrytes, String newState);
 
-    boolean setHashedProcessorTransactionState(String processorId, String processorTransactionId, String oldState, String hashedState);
+    boolean setHashedProcessorTransactionTrytes(String processorId, String processorTransactionId, String oldState, String hashedTrytes);
 
     //also sets the 'StoredBundle#lastTransaction' for bump spamming
     boolean stopBundle(long bundleIndex, String lastTransaction);

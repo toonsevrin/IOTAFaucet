@@ -44,10 +44,10 @@ public class SendingLoop implements Runnable {
     private String[] fetchHashedTrytes(String processor) {
         return StreamSupport.stream(databaseProvider.getProcessorTransactions(processor).spliterator(), false)
                 .map(processorTransaction -> {
-                    String trytes = processorTransaction.getHashedTrytes();
-                    if (trytes == null)
+                    String state = processorTransaction.getHashedTrytes();
+                    if (state == null)
                         throw new RuntimeException("Sending loop found transaction with unhashed trytes!");
-                    return trytes;
+                    return state;
                 }).toArray(String[]::new);
     }
 }
