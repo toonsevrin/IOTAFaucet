@@ -1,5 +1,6 @@
 package com.sevrin.toon.IOTAFaucet.database;
 
+import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.*;
 
 /**
@@ -12,7 +13,7 @@ import org.mongodb.morphia.annotations.*;
 )
 public class StoredTransaction {
     @Id
-    private String transactionId;
+    private ObjectId transactionId;
     @Property("created")
     private Long created;
     @Property("walletAddress")
@@ -24,7 +25,7 @@ public class StoredTransaction {
     public StoredTransaction() {
     }
 
-    public StoredTransaction(Long created, String walletAddress, long amount) {
+    public StoredTransaction(Long created,String walletAddress, long amount) {
         this.created = created;
         this.walletAddress = walletAddress;
         this.amount = amount;
@@ -39,7 +40,7 @@ public class StoredTransaction {
     }
 
 
-    public String getTransactionId() {
+    public ObjectId getTransactionId() {
         return transactionId;
     }
 

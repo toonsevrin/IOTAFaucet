@@ -9,6 +9,10 @@ import com.sevrin.toon.IOTAFaucet.database.MongoDatabaseProvider;
 import com.sevrin.toon.IOTAFaucet.iota.IotaProvider;
 import com.sevrin.toon.IOTAFaucet.web.Frontend;
 import jota.IotaAPI;
+import jota.error.InvalidAddressException;
+import jota.pow.JCurl;
+import jota.utils.IotaAPIUtils;
+import org.apache.commons.lang.StringUtils;
 
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
@@ -17,7 +21,7 @@ import java.util.concurrent.TimeUnit;
  * Created by toonsev on 6/10/2017.
  */
 public class Bootstrap {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         URI nodeAddress = URI.create(getEnv("IOTA_URI"));
 
         IotaAPI iotaAPI = new IotaAPI.Builder().protocol(nodeAddress.getScheme()).host(nodeAddress.getHost()).port(nodeAddress.getPort() + "").build();

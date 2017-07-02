@@ -1,6 +1,7 @@
 package com.sevrin.toon.IOTAFaucet.database;
 
 import com.sevrin.toon.IOTAFaucet.User;
+import org.bson.types.ObjectId;
 
 /**
  * Created by toonsev on 6/12/2017.
@@ -8,12 +9,12 @@ import com.sevrin.toon.IOTAFaucet.User;
 public interface DatabaseProvider {
     Long getLastTokensReceived(User user);
 
-    void setTokensReceived(User user);
+    boolean setTokensReceived(User user, long amount);
 
 
     Integer getLastKnownAddressIndex(String seed);
 
-    void setLastKnownAddressIndex(String seed, long index);
+    boolean setLastKnownAddressIndex(String seed, long index);
 
     StoredBundle getLastBundle();
 
@@ -32,23 +33,23 @@ public interface DatabaseProvider {
 
     boolean saveProcessorTransaction(Iterable<ProcessorTransaction> processorTransactions);
 
-    ProcessorTransaction getProcessorTransaction(String processorId, String processorTransactionId);
+    ProcessorTransaction getProcessorTransaction(String processorId, ObjectId processorTransactionId);
 
     //prevTransactionId is nullable for first
-    ProcessorTransaction getNextProcessorTransaction(String processorId, String prevProcessorTransactionId);
+    ProcessorTransaction getNextProcessorTransaction(String processorId, Long prevTransactionBundleIndex);
 
     boolean confirmBundle(long bundleIndex);
 
-    boolean startBundle(long bundleIndex, String processorId, String startTx, String branch, String trunk);
+    boolean startBundle(long bundleIndex, String processorId, ObjectId startTx, String branch, String trunk);
 
-    boolean updateCurrentInBundle(long bundleIndex, String previousTx, String nextTx);
+    boolean updateCurrentInBundle(long bundleIndex, ObjectId previousTx, String prevTransactionHash, ObjectId nextTx);
 
-    boolean updateProcessorTransactionTrytes(String processorId, String processorTransactionid, String oldTrytes, String newTrytes, String newState);
+    boolean updateProcessorTransactionTrytes(String processorId, ObjectId processorTransactionid, String oldTrytes, String newTrytes, String newState);
 
-    boolean setHashedProcessorTransactionTrytes(String processorId, String processorTransactionId, String oldState, String hashedTrytes);
+    boolean setHashedProcessorTransactionTrytes(String processorId, ObjectId processorTransactionId, String oldState, String hashedTrytes);
 
     //also sets the 'StoredBundle#lastTransaction' for bump spamming
-    boolean stopBundle(long bundleIndex, String lastTransaction);
+    boolean stopBundle(long bundleIndex, ObjectId lastTransaction);
 
     boolean sendBundle(long bundleIndex);
 

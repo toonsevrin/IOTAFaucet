@@ -7,11 +7,19 @@ public class DoWorkReq {
     private String processorId;
     private String processorTransactionUniqueId;
     private String state;
+    private String trytes;
+    private int minWeightMagnitude;
 
-    public DoWorkReq(String processorId, String processorTransactionUniqueId, String state) {
+    public DoWorkReq(String processorId, String processorTransactionUniqueId, String trytes, String state, int minWeightMagnitude) {
         this.processorId = processorId;
         this.processorTransactionUniqueId = processorTransactionUniqueId;
+        this.trytes = trytes;
         this.state = state;
+        this.minWeightMagnitude = minWeightMagnitude;
+    }
+
+    public String getTrytes() {
+        return trytes;
     }
 
     public String getProcessorId() {
@@ -27,6 +35,6 @@ public class DoWorkReq {
     }
 
     public int getMinWeightMagnitude(){
-        return 15;
+        return minWeightMagnitude;
     }
 }

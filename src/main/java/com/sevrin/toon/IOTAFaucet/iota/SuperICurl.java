@@ -9,11 +9,13 @@ public class SuperICurl extends JCurl {
     @Override
     public JCurl absorb(int[] trits, int offset, int length) {
         do {
-            System.arraycopy(trits, offset, getState(), 0, length < 243?length:243);
-            this.transform();
-            offset += 243;
+            System.arraycopy(trits, offset, getState(), 0, length < 243 ? length : 243);
             length -= 243;
-        } while(length > 243);
+            if (length > 243) {
+                this.transform();
+                offset += 243;
+            }
+        } while (length > 0);
 
         return this;
     }

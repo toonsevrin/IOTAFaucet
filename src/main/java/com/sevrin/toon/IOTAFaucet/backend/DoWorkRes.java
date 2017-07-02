@@ -1,5 +1,7 @@
 package com.sevrin.toon.IOTAFaucet.backend;
 
+import org.bson.types.ObjectId;
+
 /**
  * Created by toonsev on 6/16/2017.
  */
@@ -8,9 +10,11 @@ public class DoWorkRes {
     private String processorTransactionUniqueId;
     private String hash;
 
-    public DoWorkRes(String transactionId, String processorId, String hash) {
-        this.processorTransactionUniqueId = processorTransactionUniqueId;
+    public DoWorkRes() {}
+
+    public DoWorkRes(String processorId, String processorTransactionUniqueId, String hash) {
         this.processorId = processorId;
+        this.processorTransactionUniqueId = processorTransactionUniqueId;
         this.hash = hash;
     }
 
@@ -18,8 +22,8 @@ public class DoWorkRes {
         return processorId;
     }
 
-    public String getProcessorTransactionUniqueId() {
-        return processorTransactionUniqueId;
+    public ObjectId getProcessorTransactionUniqueId() {
+        return new ObjectId(processorTransactionUniqueId);
     }
 
     public String getHash() {

@@ -1,18 +1,20 @@
 package com.sevrin.toon.IOTAFaucet.database;
 
+import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.*;
 
 /**
  * Created by toonsev on 6/17/2017.
  */
-@Entity("processorTransaction")
+@Entity("processorTransactions")
 @Indexes({
-        @Index(value = "processorId", fields = @Field("processorId")),
-        @Index(value = "transactionId", fields = @Field("transactionId"))}
+        @Index(value = "processorId", fields = @Field("processorId"))
+}
 )
 public class ProcessorTransaction {
     @Id
-    private String uniqueId;
+    private ObjectId uniqueId;
+
     @Property("processorId")
     private String processorId;
     @Property("trytes")
@@ -23,8 +25,6 @@ public class ProcessorTransaction {
     private String hashedTrytes;
     //linked transaction if a transaction exists, note that this does not exist on the remainer transaction
 
-    @Property("transactionId")
-    private String transactionId;
     @Property("lastBranch")
     private String lastBranch;//make sure this is set and saved.
     @Property("branchLastUpdated")
@@ -32,17 +32,24 @@ public class ProcessorTransaction {
 
     @Property("minWeightMagnitude")
     private int minWeightMagnitude = 15;
+    @Property("bundleIndex")
+    private long bundleIndex;
+
 
     public ProcessorTransaction() {
     }
 
-    public ProcessorTransaction(String trytes, String state, String processorId, String transactionId) {
+    public ProcessorTransaction(String trytes,  long bundleIndex, String state, String processorId) {
         this.trytes = trytes;
+        this.bundleIndex = bundleIndex;
         this.state = state;
-        this.transactionId = transactionId;
+        this.processorId = processorId;
     }
 
-    public String getUniqueId() {
+    public long getIndexInBundle() {
+        return bundleIndex;
+    }
+    public ObjectId getUniqueId() {
         return uniqueId;
     }
 
@@ -86,7 +93,4 @@ public class ProcessorTransaction {
         return branchLastUpdated;
     }
 
-    public String getTransactionId() {
-        return transactionId;
-    }
 }

@@ -1,22 +1,17 @@
 package com.sevrin.toon.IOTAFaucet.database;
 
 import com.mongodb.MongoClient;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.UpdateOptions;
 import com.sevrin.toon.IOTAFaucet.User;
-import org.apache.commons.collections.SortedBag;
-import org.apache.commons.lang.SystemUtils;
 import org.bson.Document;
+import org.bson.types.ObjectId;
 import org.mongodb.morphia.Datastore;
 import org.mongodb.morphia.InsertOptions;
 import org.mongodb.morphia.Morphia;
+import org.mongodb.morphia.UpdateOptions;
 import org.mongodb.morphia.query.*;
 
-import java.util.Arrays;
 import java.util.List;
 
-import static com.mongodb.client.model.Updates.set;
 
 /**
  * Created by toonsev on 6/15/2017.
@@ -25,57 +20,34 @@ public class MongoDatabaseProvider implements DatabaseProvider {
     private final Morphia morphia = new Morphia();
     private final Datastore datastore;
 
-    private MongoCollection<Document> usageCollection;
-    private MongoCollection<Document> bundlesCollection;
-    private MongoCollection<Document> processorTransactionsCollection;
-    private MongoCollection<Document> transactionsCollection;
-    private MongoCollection<Document> addressCacheCollection;
 
     public MongoDatabaseProvider(MongoClient mongoClient, String databaseName) {
         morphia.mapPackage("com.sevrin.toon.IOTAFaucet.database");
         this.datastore = morphia.createDatastore(mongoClient, databaseName);
         this.datastore.ensureIndexes();
 
-
-        MongoDatabase db = mongoClient.getDatabase(databaseName);
-        this.usageCollection = db.getCollection("usage");
-        usageCollection.createIndex(new Document("ip", 1));
-        usageCollection.createIndex(new Document("address", 1));
-
-        this.bundlesCollection = db.getCollection("bundles");
-        bundlesCollection.createIndex(new Document("bundleId", 1));
-        bundlesCollection.createIndex(new Document("processorId", 1));
-        bundlesCollection.createIndex(new Document("currentTransaction", 1));
-
-        this.transactionsCollection = db.getCollection("transactions");
-
-        this.processorTransactionsCollection = db.getCollection("processorTransactions");
-        processorTransactionsCollection.createIndex(new Document("transactionId", 1));
-        processorTransactionsCollection.createIndex(new Document("processorId", 1));
-
-        this.addressCacheCollection = db.getCollection("addressCache");
-
     }
 
     //addressCache
     @Override
     public Integer getLastKnownAddressIndex(String seed) {
-        Document document = addressCacheCollection.find(new Document("_id", seed)).first();
-        if (document == null || !document.containsKey("lastIndex"))
-            return null;
-        return document.getInteger("lastIndex");
+        CachedSeed cachedSeed = datastore.get(CachedSeed.class, seed);
+        return cachedSeed == null ? null : cachedSeed.getLastIndex();
     }
 
     @Override
-    public void setLastKnownAddressIndex(String seed, long index) {
-        addressCacheCollection.updateOne(new Document("_id", seed), set("lastIndex", index), new UpdateOptions().upsert(true));
+    public boolean setLastKnownAddressIndex(String seed, long index) {
+        Query<CachedSeed> query = datastore.createQuery(CachedSeed.class).field("_id").equal(seed);
+        UpdateOperations<CachedSeed> updateOperations = datastore.createUpdateOperations(CachedSeed.class)
+                .set("lastIndex", index);
+        return datastore.update(query, updateOperations, new UpdateOptions().upsert(true)).getUpdatedCount() > 0;
     }
 
 
     @Override
     public Iterable<StoredTransaction> getTransactionsSinceLastBundle() {
         StoredBundle lastBundle = getLastBundle();
-        long start = lastBundle == null ? 0 : lastBundle.getStarted();
+        long start = lastBundle == null || lastBundle.getStarted() == null ? 0 : lastBundle.getStarted();
         return datastore.createQuery(StoredTransaction.class).field("created").greaterThan(start);
     }
 
@@ -90,7 +62,7 @@ public class MongoDatabaseProvider implements DatabaseProvider {
     public StoredBundle getCurrentBundle() {
         List<StoredBundle> bundles = datastore.createQuery(StoredBundle.class)
                 .field("stopped").doesNotExist()
-                .order(Sort.descending("orderId"))
+                .order(Sort.descending("bundleId"))
                 .asList(new FindOptions().limit(1));
         return bundles.isEmpty() ? null : bundles.get(0);
     }
@@ -112,7 +84,7 @@ public class MongoDatabaseProvider implements DatabaseProvider {
 
     @Override
     public StoredBundle getLastBundle() {
-        List<StoredBundle> bundles = datastore.createQuery(StoredBundle.class).order(Sort.descending("orderId")).asList(new FindOptions().limit(1));
+        List<StoredBundle> bundles = datastore.createQuery(StoredBundle.class).order(Sort.descending("bundleId")).asList(new FindOptions().limit(1));
         return bundles.isEmpty() ? null : bundles.get(0);
     }
 
@@ -129,15 +101,16 @@ public class MongoDatabaseProvider implements DatabaseProvider {
     }
 
     @Override
-    public ProcessorTransaction getProcessorTransaction(String processorId, String processorTransactionId) {
+    public ProcessorTransaction getProcessorTransaction(String processorId, ObjectId processorTransactionId) {
         return datastore.createQuery(ProcessorTransaction.class).field("processorId").equal(processorId).field("_id").equal(processorTransactionId).get();
     }
 
     @Override
-    public ProcessorTransaction getNextProcessorTransaction(String processorId, String prevProcessorTransactionId) {
-        List<ProcessorTransaction> transactions = datastore.createQuery(ProcessorTransaction.class).field("processorId").equal(processorId)
-                .field("_id").greaterThan(prevProcessorTransactionId)
-                .order(Sort.ascending("_id"))
+    public ProcessorTransaction getNextProcessorTransaction(String processorId, Long prevTransactionBundleIndex) {
+        Query<ProcessorTransaction> processorTransactions = datastore.createQuery(ProcessorTransaction.class).field("processorId").equal(processorId);
+        if (prevTransactionBundleIndex != null)
+            processorTransactions = processorTransactions.field("bundleIndex").lessThan(prevTransactionBundleIndex);
+        List<ProcessorTransaction> transactions = processorTransactions.order(Sort.descending("bundleIndex"))
                 .asList(new FindOptions().limit(1));
         return transactions.isEmpty() ? null : transactions.get(0);
     }
@@ -150,7 +123,10 @@ public class MongoDatabaseProvider implements DatabaseProvider {
     }
 
     @Override
-    public boolean startBundle(long bundleId, String processorId, String startTx, String branch, String trunk) {
+    public boolean startBundle(long bundleId, String processorId, ObjectId startTx, String branch, String trunk) {
+        //Let's make sure a bundle is created with this bundleId first, because in the next query we are putting some more restrictions, and we don't want to upsert these
+        datastore.update(datastore.createQuery(StoredBundle.class).field("bundleId").equal(bundleId), datastore.createUpdateOperations(StoredBundle.class).set("bundleId", bundleId), new UpdateOptions().upsert(true));
+
         Query<StoredBundle> query = datastore.createQuery(StoredBundle.class).field("bundleId").equal(bundleId).field("started").doesNotExist().field("processorId").doesNotExist();
         UpdateOperations<StoredBundle> updateOperations = datastore.createUpdateOperations(StoredBundle.class)
                 .set("started", System.currentTimeMillis())
@@ -162,15 +138,16 @@ public class MongoDatabaseProvider implements DatabaseProvider {
     }
 
     @Override
-    public boolean updateCurrentInBundle(long bundleId, String previousTx, String nextTx) {
+    public boolean updateCurrentInBundle(long bundleId, ObjectId previousTx, String prevTransactionHash, ObjectId nextTx) {
         Query<StoredBundle> query = datastore.createQuery(StoredBundle.class).field("bundleId").equal(bundleId).field("currentTransaction").equal(previousTx);
         UpdateOperations<StoredBundle> updateOperations = datastore.createUpdateOperations(StoredBundle.class)
-                .set("currentTransaction", nextTx);
+                .set("currentTransaction", nextTx)
+                .set("prevTransactionHash", prevTransactionHash);
         return datastore.update(query, updateOperations).getUpdatedCount() > 0;
     }
 
     @Override
-    public boolean updateProcessorTransactionTrytes(String processorId, String processorTransactionId, String oldTrytes, String newTrytes, String newState) {
+    public boolean updateProcessorTransactionTrytes(String processorId, ObjectId processorTransactionId, String oldTrytes, String newTrytes, String newState) {
         Query<ProcessorTransaction> query = datastore.createQuery(ProcessorTransaction.class).field("_id").equal(processorTransactionId)
                 .field("processorId").equal(processorId)
                 .field("trytes").equal(oldTrytes);
@@ -181,7 +158,7 @@ public class MongoDatabaseProvider implements DatabaseProvider {
     }
 
     @Override
-    public boolean setHashedProcessorTransactionTrytes(String processorId, String processorTransactionId, String oldState, String hashedTrytes) {
+    public boolean setHashedProcessorTransactionTrytes(String processorId, ObjectId processorTransactionId, String oldState, String hashedTrytes) {
         Query<ProcessorTransaction> query = datastore.createQuery(ProcessorTransaction.class).field("_id").equal(processorTransactionId)
                 .field("processorId").equal(processorId)
                 .field("state").equal(oldState);
@@ -191,12 +168,12 @@ public class MongoDatabaseProvider implements DatabaseProvider {
     }
 
     @Override
-    public boolean stopBundle(long bundleId, String lastTransaction) {
+    public boolean stopBundle(long bundleId, ObjectId lastTransaction) {
         Query<StoredBundle> query = datastore.createQuery(StoredBundle.class).field("bundleId").equal(bundleId)
                 .field("stopped").doesNotExist()
                 .field("currentTransaction").equal(lastTransaction);
         UpdateOperations<StoredBundle> updateOperations = datastore.createUpdateOperations(StoredBundle.class)
-                .set("currentTransaction", null)
+                .unset("currentTransaction")
                 .set("stopped", System.currentTimeMillis())
                 .set("lastTransaction", lastTransaction);
         return datastore.update(query, updateOperations).getUpdatedCount() > 0;
@@ -228,29 +205,25 @@ public class MongoDatabaseProvider implements DatabaseProvider {
 
     @Override
     public boolean allBundlesAreConfirmed() {
-        return datastore.createQuery(StoredBundle.class).field("confirmed").doesNotExist().get() == null;//if a storedbundle exists, this will return false
+        return datastore.createQuery(StoredBundle.class).field("started").exists().field("confirmed").doesNotExist().get() == null;//if a storedbundle exists, this will return false
     }
 
     @Override
     public Long getLastTokensReceived(User user) {
-        Long addressLastUsage = getLastUsageFromDoc(usageCollection.find(new Document("address", user.getWalletAddress())).first());
-        Long ipLastUsage = getLastUsageFromDoc(usageCollection.find(new Document("ip", user.getIpAddress())).first());
+        StoredUsage addressLastUsage = datastore.createQuery(StoredUsage.class).field("walletAddress").equal(user.getWalletAddress()).get();
+        StoredUsage ipLastUsage = datastore.createQuery(StoredUsage.class).field("ipAddress").equal(user.getIpAddress()).get();
         if (addressLastUsage != null && ipLastUsage != null)//return the largest of the two, the most recent usage
-            return addressLastUsage > ipLastUsage ? addressLastUsage : ipLastUsage;
+            return addressLastUsage.getLastUsage() > ipLastUsage.getLastUsage() ? addressLastUsage.getLastUsage() : ipLastUsage.getLastUsage();
         if (addressLastUsage != null)
-            return addressLastUsage;
-        return ipLastUsage;
-    }
-
-    private Long getLastUsageFromDoc(Document usageDoc) {
-        if (usageDoc != null && usageDoc.containsKey("lastUsage"))
-            return usageDoc.getLong("lastUsage");
-        return null;
+            return addressLastUsage.getLastUsage();
+        return ipLastUsage != null ? ipLastUsage.getLastUsage() : null;
     }
 
     @Override
-    public void setTokensReceived(User user) {
-        usageCollection.updateOne(new Document("address", user.getWalletAddress()), set("lastUsage", System.currentTimeMillis()), new UpdateOptions().upsert(true));
-        usageCollection.updateOne(new Document("ip", user.getIpAddress()), set("lastUsage", System.currentTimeMillis()), new UpdateOptions().upsert(true));
+    public boolean setTokensReceived(User user, long amount) {
+        Query<StoredUser> query = datastore.createQuery(StoredUser.class).field("_id").equal(user.getWalletAddress());
+        UpdateOperations<StoredUser> updateOperations = datastore.createUpdateOperations(StoredUser.class)
+                .inc("totalTokensReceived", amount);
+        return datastore.update(query, updateOperations).getUpdatedCount() > 0;
     }
 }

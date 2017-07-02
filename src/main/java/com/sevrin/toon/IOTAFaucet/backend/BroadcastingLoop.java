@@ -28,28 +28,47 @@ public class BroadcastingLoop implements Runnable {
     @Override
     public void run() {
         StoredBundle bundle = databaseProvider.getCurrentBundle();
-        if (bundle.getCurrentTransaction() != null) {
+        if (bundle == null) {
+            System.out.println("Broadcaster: No bundle yet to broadcast transactions off");
+            return;
+        }
+        if (bundle.getCurrentTransaction() != null && bundle.getProcessor() != null) {
             ProcessorTransaction currentTransaction = databaseProvider.getProcessorTransaction(bundle.getProcessor(), bundle.getCurrentTransaction());
-            if (currentTransaction.getLastBranch() != null) {
-                if (currentTransaction.getBranchLastUpdated() == null || currentTransaction.getBranchLastUpdated() + BRANCH_UPDATE_INTERVAL < System.currentTimeMillis()) {
-                    String oldTrytes = currentTransaction.getTrytes();
-                    String branch = iotaProvider.getNewBranchTransaction();
-                    Transaction transaction = new Transaction(oldTrytes);
-                    transaction.setBranchTransaction(branch);
-                    String newTrytes = transaction.toTrytes();
-                    String newState = iotaProvider.trytesToStateMatrix(newTrytes);
-                    boolean updated = databaseProvider.updateProcessorTransactionTrytes(bundle.getProcessor(), currentTransaction.getTransactionId(), oldTrytes, newTrytes, newState);
-                    if (updated) {
-                        System.out.println("Sucessfully updated branch of last processorTransaction in bundle (these should be fresh)");
-                        currentTransaction.setTrytes(newTrytes);
-                        currentTransaction.setState(newState);
-                    } else
-                        System.out.println("Failed to update branch of last processorTransaction (maybe another process did this already?");
-                } else
-                    System.out.println("Waiting for more time to expire before the lastTransaction is regenerated, the branch is still fresh.");
+            if(currentTransaction == null || currentTransaction.getTrytes() == null){
+                System.out.println("Broadcaster: Current transaction does not exist?");
+                return;
             }
-            System.out.println("Broadcasting processorTransaction " + currentTransaction.getTransactionId() + " to clients.");
-            processorTransactionSubject.onNext(new DoWorkReq(currentTransaction.getProcessorId(), currentTransaction.getUniqueId(), currentTransaction.getState()));
+
+            String oldTrytes = currentTransaction.getTrytes();
+            System.out.println("Old trytes: " + oldTrytes);
+            Transaction transaction = new Transaction(oldTrytes);
+
+            if (bundle.getPrevTransactionHash() != null){
+//                if (currentTransaction.getIndexInBundle() == 0)
+//                    transaction.setBranchTransaction(iotaProvider.getNewBranchTransaction());
+//                else
+                    transaction.setBranchTransaction(bundle.getBranch());
+                transaction.setTrunkTransaction(bundle.getPrevTransactionHash());
+            }else{
+                transaction.setBranchTransaction(bundle.getTrunk());
+                transaction.setTrunkTransaction(bundle.getBranch());
+            }
+
+            String newTrytes = transaction.toTrytes();
+            String newState = iotaProvider.trytesToStateMatrix(newTrytes);
+            boolean updated = databaseProvider.updateProcessorTransactionTrytes(bundle.getProcessor(), currentTransaction.getUniqueId(), oldTrytes, newTrytes, newState);
+            if (updated) {
+                System.out.println("Sucessfully updated branch of last processorTransaction in bundle (these should be fresh)");
+                currentTransaction.setTrytes(newTrytes);
+                currentTransaction.setState(newState);
+            } else
+                System.out.println("Failed to update branch of last processorTransaction (maybe another process did this already?");
+            System.out.println("Broadcasting processorTransaction " + currentTransaction.getUniqueId() + " to clients.");
+            //TODO: implement state
+            processorTransactionSubject.onNext(
+                    new DoWorkReq(currentTransaction.getProcessorId(),
+                            currentTransaction.getUniqueId().toString(),
+                            currentTransaction.getTrytes(), null, currentTransaction.getMinWeightMagnitude()));
         } else
             System.out.println("No current transaction to broadcast to clients.");
     }

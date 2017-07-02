@@ -24,7 +24,7 @@ Returns new state to finish, or that the transaction is already finished and sen
 
 
 
-EVENT/LOOP DRIVEN MODEL:
+## EVENT/LOOP DRIVEN MODEL:
 
 Broadcasting loop DONE:
 - fetch started bundle with a currentTx (DatabaseProvider#getCurrentBundle)
@@ -71,3 +71,9 @@ Start loop:
 ON REQUEST:
 - check if address/ip made a request recently
 - append transaction to storedTransactionsCollection: {"address": ..., "amount": 10}
+
+
+## Thoughts
+
+Maybe do a "lazy attach" on the branch and trunk of a bundle (pick transactions which are very confirmed already),
+that way the chances of having to regenerate the bundle from here are slim.

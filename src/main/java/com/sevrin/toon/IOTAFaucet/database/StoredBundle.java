@@ -1,6 +1,7 @@
 package com.sevrin.toon.IOTAFaucet.database;
 
 
+import org.bson.types.ObjectId;
 import org.mongodb.morphia.annotations.*;
 
 /**
@@ -19,13 +20,15 @@ import org.mongodb.morphia.annotations.*;
 
 public class StoredBundle {
     @Id
-    private String uniqueId;
+    private ObjectId uniqueId;
     @Property("bundleId")
     private long bundleId;
     @Property("processorId")
     private String processorId;
     @Property("currentTransaction")
-    private String currentTransaction;
+    private ObjectId currentTransaction;
+    @Property("prevTransactionHash")
+    private String prevTransactionHash;
     @Property("started")
     private Long started;
     @Property("stopped")
@@ -52,7 +55,7 @@ public class StoredBundle {
         this.bundleId = bundleId;
     }
 
-    public String getUniqueId() {
+    public ObjectId getUniqueId() {
         return uniqueId;
     }
 
@@ -64,12 +67,15 @@ public class StoredBundle {
         return started;
     }
 
+    public String getPrevTransactionHash() {
+        return prevTransactionHash;
+    }
 
     public String getProcessor() {
         return processorId;
     }
 
-    public String getCurrentTransaction() {
+    public ObjectId getCurrentTransaction() {
         return currentTransaction;
     }
 

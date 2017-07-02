@@ -1,5 +1,6 @@
 package com.sevrin.toon.IOTAFaucet.backend;
 
+import com.google.gson.Gson;
 import com.sevrin.toon.IOTAFaucet.User;
 import com.sevrin.toon.IOTAFaucet.database.DatabaseProvider;
 import com.sevrin.toon.IOTAFaucet.database.ProcessorTransaction;
@@ -9,6 +10,7 @@ import com.sevrin.toon.IOTAFaucet.iota.IotaProvider;
 import io.reactivex.Observable;
 import io.reactivex.Scheduler;
 import io.reactivex.schedulers.Schedulers;
+import jota.model.Transaction;
 import jota.utils.Converter;
 
 import java.util.concurrent.TimeUnit;
@@ -76,12 +78,13 @@ public class Backend {
             System.out.println("Received doworkres with invalid hash");
             return;
         }
-        String hashedTrytes = Converter.trytes(iotaProvider.getTrytesWithHash(Converter.trits(transaction.getTrytes()), Converter.trits(doWorkRes.getHash())));
-
+        String hashedTrytes = Converter.trytes(iotaProvider.getTritssWithHash(Converter.trits(transaction.getTrytes()), Converter.trits(doWorkRes.getHash())));
+        System.out.println("Trytes: " + hashedTrytes);
         boolean updatedHash = databaseProvider.setHashedProcessorTransactionTrytes(transaction.getProcessorId(), transaction.getUniqueId(), transaction.getState(), hashedTrytes);
         if (updatedHash) {
             System.out.println("Saved transaction hash " + doWorkRes.getHash() + "to database.");
-            ProcessorTransaction nextTransaction = databaseProvider.getNextProcessorTransaction(bundle.getProcessor(), bundle.getCurrentTransaction());
+            ProcessorTransaction nextTransaction = databaseProvider.getNextProcessorTransaction(bundle.getProcessor(), transaction.getIndexInBundle());
+            System.out.println(new Gson().toJson(nextTransaction));
             if (nextTransaction == null) {
                 boolean stopped = databaseProvider.stopBundle(bundle.getBundleId(), bundle.getCurrentTransaction());
                 if (stopped)
@@ -89,7 +92,7 @@ public class Backend {
                 else
                     System.out.println("Failed to stop bundle, maybe it was already stopped?");
             } else {
-                boolean nextTransactionUpdated = databaseProvider.updateCurrentInBundle(bundle.getBundleId(), transaction.getUniqueId(), nextTransaction.getTransactionId());
+                boolean nextTransactionUpdated = databaseProvider.updateCurrentInBundle(bundle.getBundleId(), transaction.getUniqueId(), new Transaction(hashedTrytes).getHash(), nextTransaction.getUniqueId());
                 if (nextTransactionUpdated) {
                     System.out.println("Next transaction saved, broadcasting it now...");
                     broadcastingLoop.run();
@@ -109,8 +112,9 @@ public class Backend {
                 if (difference > 0)
                     return new HandleRewardResponse(-2, "You will need to wait " + formatTimeToWait(difference) + ".");
             }
-            databaseProvider.setTokensReceived(user);
-            StoredTransaction transaction = databaseProvider.addTransaction(user.getWalletAddress(), getPayoutPerRequest());
+            long payout = getPayoutPerRequest();
+            databaseProvider.setTokensReceived(user, payout);
+            StoredTransaction transaction = databaseProvider.addTransaction(user.getWalletAddress(), payout);
             if (transaction == null)
                 return new HandleRewardResponse(-3, "Received a null transaction from databaseProvider");
             return new HandleRewardResponse(transaction, "Your transaction is now pending. Stay on the site to confirm it!");

@@ -12,11 +12,14 @@ import jota.pow.JCurl;
 import jota.utils.Converter;
 import jota.utils.IotaAPIUtils;
 import jota.utils.StopWatch;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+
+import static jota.pow.JCurl.HASH_LENGTH;
 
 /**
  * Created by toonsev on 6/10/2017.
@@ -27,14 +30,16 @@ public class IotaProvider {
     private IotaAPI iotaAPI;
 
     public IotaProvider(IotaAPI iotaAPI, String seed) {
-        this.seed = seed;
+        this.iotaAPI = iotaAPI;
+        this.seed = StringUtils.rightPad(seed, 81, "9");
     }
 
 
-    public int[] getTrytesWithHash(int[] originalTrytes, int[] hash) {
-        int[] toReturn = new int[originalTrytes.length];//no sideeffects
-        System.arraycopy(originalTrytes, 0, toReturn, 0, originalTrytes.length);
-        System.arraycopy(hash, 0, toReturn, originalTrytes.length - 81, 81);
+    public int[] getTritssWithHash(int[] originalTrits, int[] hash) {
+        int[] toReturn = new int[originalTrits.length];//no sideeffects
+        System.arraycopy(originalTrits, 0, toReturn, 0, originalTrits.length);
+        System.arraycopy(hash, 0, toReturn, originalTrits.length - 243, 243);
+
         return toReturn;
     }
 
@@ -45,6 +50,7 @@ public class IotaProvider {
             System.out.println("Received hash trits with length " + hashTrits.length);
             return null;
         }
+        //
         System.arraycopy(hashTrits, 0, stateArray, 0, 243);//maybe not use the realState for this, as we may want to keep it immutable
 
         ICurl curl = new JCurl();
@@ -83,6 +89,7 @@ public class IotaProvider {
     }
 
     public String getAddress(int index) throws InvalidAddressException {
+
         return IotaAPIUtils.newAddress(seed, 2, index, false, null);
     }
 
@@ -95,7 +102,7 @@ public class IotaProvider {
     }
 
     public boolean areHashesConfirmed(String[] hashes) {
-
+        //TODO: This one is no good
         for (Transaction transaction : iotaAPI.getTransactionsObjects(hashes))
             if (!transaction.getPersistence())
                 return false;
@@ -130,12 +137,19 @@ public class IotaProvider {
         for (Transfer transfer : transfers)
             total += transfer.getValue();
         List<Input> inputs = iotaAPI.getBalanceAndFormat(Arrays.asList(currentAddress), total, 0, 0, new StopWatch(), 2).getInput();
-        return iotaAPI.prepareTransfers(seed, 2, transfers, remainderAddress, inputs);
+        transfers.forEach(transfer -> System.out.println("Transfer: " + transfer.getAddress() + ": " + transfer.getValue()));
+        inputs.forEach(input -> System.out.println("Input: " + input.getAddress() + ": " + input.getKeyIndex() + ": " + input.getBalance()));
+        System.out.println("RemainingAddress: " + remainderAddress);
+        System.out.println("Seed: " + seed);
+        return iotaAPI.prepareTransfers(seed, 2, transfers, remainderAddress, inputs, false);
     }
 
-    //TODO: Implement
     public String trytesToStateMatrix(String trytes) {
-        return "";
+        System.out.println(trytes);
+        int[] trits = Converter.trits(trytes);
+        ICurl curl = new JCurl();
+        curl.absorb(trits, 0, trits.length - HASH_LENGTH);
+        return Converter.trytes(curl.getState());
     }
 
     public String getSeed() {
