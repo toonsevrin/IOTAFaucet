@@ -34,7 +34,7 @@ public class BroadcastingLoop implements Runnable {
         }
         if (bundle.getCurrentTransaction() != null && bundle.getProcessor() != null) {
             ProcessorTransaction currentTransaction = databaseProvider.getProcessorTransaction(bundle.getProcessor(), bundle.getCurrentTransaction());
-            if(currentTransaction == null || currentTransaction.getTrytes() == null){
+            if (currentTransaction == null || currentTransaction.getTrytes() == null) {
                 System.out.println("Broadcaster: Current transaction does not exist?");
                 return;
             }
@@ -43,16 +43,8 @@ public class BroadcastingLoop implements Runnable {
             System.out.println("Old trytes: " + oldTrytes);
             Transaction transaction = new Transaction(oldTrytes);
 
-            if (bundle.getPrevTransactionHash() != null){
-//                if (currentTransaction.getIndexInBundle() == 0)
-//                    transaction.setBranchTransaction(iotaProvider.getNewBranchTransaction());
-//                else
-                    transaction.setBranchTransaction(bundle.getBranch());
-                transaction.setTrunkTransaction(bundle.getPrevTransactionHash());
-            }else{
-                transaction.setBranchTransaction(bundle.getTrunk());
-                transaction.setTrunkTransaction(bundle.getBranch());
-            }
+            transaction.setBranchTransaction(bundle.getBranch());
+            transaction.setTrunkTransaction(bundle.getPrevTransactionHash() != null ? bundle.getPrevTransactionHash() : bundle.getTrunk());
 
             String newTrytes = transaction.toTrytes();
             String newState = iotaProvider.trytesToStateMatrix(newTrytes);

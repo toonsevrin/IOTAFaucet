@@ -4,7 +4,12 @@ import com.sevrin.toon.IOTAFaucet.database.DatabaseProvider;
 import com.sevrin.toon.IOTAFaucet.database.ProcessorTransaction;
 import com.sevrin.toon.IOTAFaucet.database.StoredBundle;
 import com.sevrin.toon.IOTAFaucet.iota.IotaProvider;
+import io.reactivex.schedulers.Schedulers;
+import jota.error.*;
+import jota.model.Transaction;
+import org.bson.types.ObjectId;
 
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -13,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 public class RestartBundleLoop implements Runnable {
     private DatabaseProvider databaseProvider;
     private IotaProvider iotaProvider;
-
+    private boolean curling = false;
     private static final long SPAM_INTERVAL = TimeUnit.SECONDS.toMillis(30);
 
     public RestartBundleLoop(IotaProvider iotaProvider, DatabaseProvider databaseProvider) {
@@ -23,36 +28,53 @@ public class RestartBundleLoop implements Runnable {
 
     @Override
     public void run() {
-        for (StoredBundle storedBundle : databaseProvider.getStoppedBundles(true, false)) {
-            ProcessorTransaction lastTransaction = databaseProvider.getTransactionWithLastBranch(storedBundle.getProcessor());
-            if (!verifyTransaction(storedBundle.getBranch(), storedBundle.getSent()))
-                handleBadTransaction(false);
-            else if (!verifyTransaction(storedBundle.getBranch(), storedBundle.getSent()))
-                handleBadTransaction(false);
-            else if (!verifyTransaction(lastTransaction.getLastBranch(), storedBundle.getSent()))
-                handleBadTransaction(true);
-            else if (storedBundle.getSent() + SPAM_INTERVAL < System.currentTimeMillis())
+        for (StoredBundle storedBundle : databaseProvider.getStoppedBundles(true, false))
+            if (storedBundle.getSent() + SPAM_INTERVAL < System.currentTimeMillis())
                 spamToTop(storedBundle);
-        }
     }
 
     private void spamToTop(StoredBundle storedBundle) {
-        String lastTransaction = storedBundle.getLastTransaction();
-        String newSpam = getNewSpammedTransaction();//TODO: Implement this
-        if (newSpam != null)
-            databaseProvider.setLastSpammed(storedBundle.getBundleId(), storedBundle.getLastSpammed());
+        if (isCurling())
+            return;
+        Schedulers.io().scheduleDirect(() -> {//we don't want to hold up the restart task
+            try {
+                setCurling(true);
+                ObjectId lastTransactionId = storedBundle.getLastTransaction();
+                if (lastTransactionId == null) {
+                    System.out.println("RestartLoop: No last transaction?");
+                    return;
+                }
+                ProcessorTransaction lastTransaction = databaseProvider.getProcessorTransaction(storedBundle.getProcessor(), lastTransactionId);
+                String newSpam = getNewSpammedTransaction(new Transaction(lastTransaction.getHashedTrytes()).getHash());
+                if (newSpam != null)
+                    databaseProvider.setLastSpammed(storedBundle.getBundleId(), storedBundle.getLastSpammed());
+                else
+                    System.out.println("RestartLoop: NewSpam returned null?");
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                setCurling(false);
+            }
+        });
     }
 
-    private String getNewSpammedTransaction() {
-        return null;//TODO: Implement this
+
+    private synchronized boolean isCurling() {
+        return curling;
     }
 
-    private void handleBadTransaction(boolean top) {
-        System.out.println("NOT IMPLEMENTED: Handling of a bad transaction");
+    private synchronized void setCurling(boolean curling) {
+        this.curling = curling;
     }
 
-    private boolean verifyTransaction(String hash, long sentTime) {
-        System.out.println("NOT IMPLEMENTED: Verifying branch/trunk: " + hash);
-        return true;//TODO Reimplement this
+    private String getNewSpammedTransaction(String trunk) {
+        try {
+            String spamTransaction = iotaProvider.spamTransaction(trunk, IotaProvider.RECOMMENDED_MIN_WEIGHT_MAGNITUDE);
+            System.out.println("RestartBundle: Sent spam tx: " + spamTransaction);
+            return spamTransaction;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }

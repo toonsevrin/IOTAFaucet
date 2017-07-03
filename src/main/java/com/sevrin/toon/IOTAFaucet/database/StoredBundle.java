@@ -44,11 +44,18 @@ public class StoredBundle {
     private String trunk;
     //this is for transaction bump spamming
     @Property("lastTransaction")
-    private String lastTransaction;
+    private ObjectId lastTransaction;
     @Property("lastSpammed")
     private Long lastSpammed;
 
+    @Property("lastTransactionIndex")
+    private Long lastTransactionIndex;
+
     public StoredBundle() {
+    }
+
+    public Long getLastTransactionIndex() {
+        return lastTransactionIndex;
     }
 
     public StoredBundle(long bundleId) {
@@ -83,7 +90,7 @@ public class StoredBundle {
         return sent;
     }
 
-    public String getLastTransaction() {
+    public ObjectId getLastTransaction() {
         return lastTransaction;
     }
 

@@ -33,7 +33,7 @@ public class ProcessorTransaction {
     @Property("minWeightMagnitude")
     private int minWeightMagnitude = 15;
     @Property("bundleIndex")
-    private long bundleIndex;
+    private long bundleIndex;//THIS IS THE INDEX WITHIN THE BUNDLE EG. THE CURRENTINDEX
 
 
     public ProcessorTransaction() {

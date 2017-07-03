@@ -1,4 +1,4 @@
-var prevProcessorTransactionUniqueId = null;
+var prevTrytes = null;
 
 window.onload = new function(ei){
 if (!("WebSocket" in window)){
@@ -12,11 +12,11 @@ ws.onmessage = function (evt)  {
   console.log("state")
   var processorId = req.processorId;
   var processorTransactionUniqueId = req.processorTransactionUniqueId;
-  if(prevProcessorTransactionUniqueId == processorTransactionUniqueId){
+  if(prevTrytes == trytes){
     console.log("Already working on this transaction");
     return;
   }
-  prevProcessorTransactionUniqueId = processorTransactionUniqueId;
+  prevTrytes = trytes;
   var minWeight = req.minWeightMagnitude;
   curl.remove();
   console.log(trytes);

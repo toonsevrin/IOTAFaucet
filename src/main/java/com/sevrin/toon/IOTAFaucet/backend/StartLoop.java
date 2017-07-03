@@ -37,7 +37,10 @@ public class StartLoop implements Runnable {
         try {
             if (databaseProvider.allBundlesAreConfirmed()) {
                 Integer lastIndex = databaseProvider.getLastKnownAddressIndex(iotaProvider.getSeed());
-                Map<StoredTransaction, String> addressesByStoredTransaction = StreamSupport.stream(databaseProvider.getTransactionsSinceLastBundle().spliterator(), false)
+                StoredBundle storedBundle = databaseProvider.getLastConfirmedBundle();
+                long startIndex = storedBundle == null ? -1 : storedBundle.getLastTransactionIndex();
+                long endIndex = databaseProvider.getTransactionIndexOfLatestTransaction();
+                Map<StoredTransaction, String> addressesByStoredTransaction = StreamSupport.stream(databaseProvider.getTransactionsUpToIndex(startIndex, endIndex).spliterator(), false)
                         .collect(Collectors.toMap(transaction -> transaction, transaction -> transaction.getWalletAddress()));
                 if (addressesByStoredTransaction == null || addressesByStoredTransaction.isEmpty()) {
                     System.out.println("No transactions made yet, not starting a bundle.");
@@ -55,23 +58,20 @@ public class StartLoop implements Runnable {
 
                 String processorId = UUID.randomUUID().toString();
 
-                List<String> allTrytes = iotaProvider.prepareTransaction(addressesByStoredTransaction.keySet(), lastAddress, nextAddress);
+                List<String> allTrytes = iotaProvider.prepareTransaction(addressesByStoredTransaction.keySet(), lastIndex, lastAddress, nextAddress);
 
                 Set<ProcessorTransaction> processorTransactions = new HashSet<>();
-                final GetTransactionsToApproveResponse txsToApprove = iotaProvider.getNewBranchAndTrunkTransactions();
+                String confirmedBranch = iotaProvider.searchConfirmedTransactionHash();
                 for (int i = 0; i < allTrytes.size(); i++) {
                     String trytes = allTrytes.get(i);
                     System.out.println("Looping over trytes: " + trytes);
                     Transaction transaction = new Transaction(trytes);
-
-                    transaction.setBranchTransaction(txsToApprove.getBranchTransaction());
-
                     processorTransactions.add(fromTrytes(processorId, transaction.getCurrentIndex(), transaction.toTrytes()));
                 }
                 boolean saved = databaseProvider.saveProcessorTransaction(processorTransactions);
                 if (saved) {
                     System.out.println("saved processor " + processorId + " for bundle with address " + lastAddress + " remainder will be sent to " + nextAddress);
-                    startBundle(processorId, txsToApprove.getBranchTransaction(), txsToApprove.getTrunkTransaction(), new Transaction(allTrytes.get(0)).getLastIndex());
+                    startBundle(processorId, confirmedBranch, confirmedBranch, new Transaction(allTrytes.get(0)).getLastIndex(), endIndex);
                 } else
                     System.out.println("Failed to save processor :(");
 
@@ -82,18 +82,16 @@ public class StartLoop implements Runnable {
         }
     }
 
-    //todo check if this method is safe with multiple processes
-    private void startBundle(String processorId, String branch, String trunk, long lastBundleIndex) {
+    private void startBundle(String processorId, String branch, String trunk, long lastBundleIndex, long lastTransactionIndex) {
         StoredBundle bundle = databaseProvider.getLastConfirmedBundle();
         long bundleId = bundle == null ? 0 : bundle.getBundleId() + 1;//increment last id by one, or set it to 0 if this is first bundle
         ProcessorTransaction first = databaseProvider.getNextProcessorTransaction(processorId, lastBundleIndex + 1);
         System.out.println("first: " + first);
-        boolean started = databaseProvider.startBundle(bundleId, processorId, first.getUniqueId(), branch, trunk);
+        boolean started = databaseProvider.startBundle(bundleId, processorId, first.getUniqueId(), branch, trunk, lastTransactionIndex);
         if (started) {
             System.out.println("Started bundle " + bundleId);
         } else
             System.out.println("Failed to start bundle:" + bundleId);
-
     }
 
     private ProcessorTransaction fromTrytes(String processorId, long bundleIndex, String trytes) {

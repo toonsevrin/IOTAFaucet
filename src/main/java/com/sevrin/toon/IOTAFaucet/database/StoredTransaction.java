@@ -9,7 +9,8 @@ import org.mongodb.morphia.annotations.*;
 @Entity("transactions")
 @Indexes({
         @Index(value = "created", fields = @Field("created")),
-        @Index(value = "walletAddress", fields = @Field("walletAddress"))}
+        @Index(value = "walletAddress", fields = @Field("walletAddress")),
+        @Index(value = "insertionIndex", fields = @Field("insertionIndex"))}
 )
 public class StoredTransaction {
     @Id
@@ -21,14 +22,21 @@ public class StoredTransaction {
     @Property("amount")
     private long amount;
 
+    @Property("insertionIndex")
+    private long insertionIndex;
+
 
     public StoredTransaction() {
     }
 
-    public StoredTransaction(Long created,String walletAddress, long amount) {
+    public StoredTransaction(Long created, long insertionIndex, String walletAddress, long amount) {
         this.created = created;
         this.walletAddress = walletAddress;
         this.amount = amount;
+    }
+
+    public long getInsertionIndex() {
+        return insertionIndex;
     }
 
     public void setCreated(Long created) {

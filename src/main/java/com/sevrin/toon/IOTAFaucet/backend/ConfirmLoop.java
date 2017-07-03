@@ -7,6 +7,7 @@ import com.sevrin.toon.IOTAFaucet.iota.IotaProvider;
 import jota.model.Transaction;
 
 /**
+ * TODO: PROTECT AGAINST THIRD PARTY REATTACH: IF THE NEGATIVE TRANSACTION ADDRESS NO LONGER HAS SUFFICIENT FUNDS, CONSIDER THE TX CONFIRMED.
  * Created by toonsev on 6/17/2017.
  */
 public class ConfirmLoop implements Runnable {
@@ -23,7 +24,8 @@ public class ConfirmLoop implements Runnable {
         for (StoredBundle storedBundle : databaseProvider.getStoppedBundles(true, false)) {
             try {
                 ProcessorTransaction transaction = databaseProvider.getProcessorTransactions(storedBundle.getProcessor()).iterator().next();
-                if (iotaProvider.areHashesConfirmed(new String[]{new Transaction(transaction.getTrytes()).getHash()})) {
+                String hash = new Transaction(transaction.getHashedTrytes()).getHash();
+                if (iotaProvider.isBundleConfirmed(new String[]{hash})) {
                     if(databaseProvider.confirmBundle(storedBundle.getBundleId()))
                         System.out.println("Confirmed bundle " + storedBundle.getBundleId());
                     else

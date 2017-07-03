@@ -18,7 +18,15 @@ public interface DatabaseProvider {
 
     StoredBundle getLastBundle();
 
-    Iterable<StoredTransaction> getTransactionsSinceLastBundle();
+    /**
+     *
+     * @param minIndex exclusive
+     * @param maxIndex inclusive
+     * @return
+     */
+    Iterable<StoredTransaction> getTransactionsUpToIndex(long minIndex, long maxIndex);
+
+    Long getTransactionIndexOfLatestTransaction();
 
     StoredTransaction addTransaction(String walletAddress, long amount);
 
@@ -40,7 +48,7 @@ public interface DatabaseProvider {
 
     boolean confirmBundle(long bundleIndex);
 
-    boolean startBundle(long bundleIndex, String processorId, ObjectId startTx, String branch, String trunk);
+    boolean startBundle(long bundleIndex, String processorId, ObjectId startTx, String branch, String trunk, long lastTransactionIndex);
 
     boolean updateCurrentInBundle(long bundleIndex, ObjectId previousTx, String prevTransactionHash, ObjectId nextTx);
 
@@ -53,9 +61,11 @@ public interface DatabaseProvider {
 
     boolean sendBundle(long bundleIndex);
 
-    ProcessorTransaction getTransactionWithLastBranch(String processorId);
+    ProcessorTransaction getTopTransaction(String processorId);
 
-    boolean setLastSpammed(long bundleId, long lastSpammed);
+    boolean setLastSpammed(long bundleId, Long lastLastSpammed);
+
+    long getNewTransactionIndex();
 
     boolean allBundlesAreConfirmed();
 

@@ -77,3 +77,5 @@ ON REQUEST:
 
 Maybe do a "lazy attach" on the branch and trunk of a bundle (pick transactions which are very confirmed already),
 that way the chances of having to regenerate the bundle from here are slim.
+
+TODO: Offset
