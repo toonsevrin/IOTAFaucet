@@ -51,7 +51,14 @@ public class StoredBundle {
     @Property("lastTransactionIndex")
     private Long lastTransactionIndex;
 
+    @Property("nextAddressIndex")
+    private Long nextAddressIndex;
+
     public StoredBundle() {
+    }
+
+    public Long getNextAddressIndex() {
+        return nextAddressIndex;
     }
 
     public Long getLastTransactionIndex() {

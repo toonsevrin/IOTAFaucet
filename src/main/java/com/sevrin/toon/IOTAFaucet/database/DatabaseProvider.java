@@ -48,7 +48,7 @@ public interface DatabaseProvider {
 
     boolean confirmBundle(long bundleIndex);
 
-    boolean startBundle(long bundleIndex, String processorId, ObjectId startTx, String branch, String trunk, long lastTransactionIndex);
+    boolean startBundle(long bundleIndex, String processorId, ObjectId startTx, String branch, String trunk, long lastTransactionIndex, long nextAddressIndex);
 
     boolean updateCurrentInBundle(long bundleIndex, ObjectId previousTx, String prevTransactionHash, ObjectId nextTx);
 

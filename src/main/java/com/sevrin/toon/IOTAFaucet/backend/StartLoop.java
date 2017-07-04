@@ -1,15 +1,12 @@
 package com.sevrin.toon.IOTAFaucet.backend;
 
-import com.google.gson.Gson;
 import com.sevrin.toon.IOTAFaucet.database.DatabaseProvider;
 import com.sevrin.toon.IOTAFaucet.database.ProcessorTransaction;
 import com.sevrin.toon.IOTAFaucet.database.StoredBundle;
 import com.sevrin.toon.IOTAFaucet.database.StoredTransaction;
 import com.sevrin.toon.IOTAFaucet.iota.IotaProvider;
-import jota.dto.response.GetTransactionsToApproveResponse;
 import jota.model.Transaction;
 import jota.model.Transfer;
-import org.bson.types.ObjectId;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -39,7 +36,11 @@ public class StartLoop implements Runnable {
                 Integer lastIndex = databaseProvider.getLastKnownAddressIndex(iotaProvider.getSeed());
                 StoredBundle storedBundle = databaseProvider.getLastConfirmedBundle();
                 long startIndex = storedBundle == null ? -1 : storedBundle.getLastTransactionIndex();
-                long endIndex = databaseProvider.getTransactionIndexOfLatestTransaction();
+                Long endIndex = databaseProvider.getTransactionIndexOfLatestTransaction();
+                if (endIndex == null || endIndex <= startIndex) {
+                    System.out.println("No transactions made yet, not starting a bundle.");
+                    return;
+                }
                 Map<StoredTransaction, String> addressesByStoredTransaction = StreamSupport.stream(databaseProvider.getTransactionsUpToIndex(startIndex, endIndex).spliterator(), false)
                         .collect(Collectors.toMap(transaction -> transaction, transaction -> transaction.getWalletAddress()));
                 if (addressesByStoredTransaction == null || addressesByStoredTransaction.isEmpty()) {
@@ -71,7 +72,7 @@ public class StartLoop implements Runnable {
                 boolean saved = databaseProvider.saveProcessorTransaction(processorTransactions);
                 if (saved) {
                     System.out.println("saved processor " + processorId + " for bundle with address " + lastAddress + " remainder will be sent to " + nextAddress);
-                    startBundle(processorId, confirmedBranch, confirmedBranch, new Transaction(allTrytes.get(0)).getLastIndex(), endIndex);
+                    startBundle(processorId, confirmedBranch, confirmedBranch, new Transaction(allTrytes.get(0)).getLastIndex(), endIndex, nextIndex);
                 } else
                     System.out.println("Failed to save processor :(");
 
@@ -82,12 +83,12 @@ public class StartLoop implements Runnable {
         }
     }
 
-    private void startBundle(String processorId, String branch, String trunk, long lastBundleIndex, long lastTransactionIndex) {
+    private void startBundle(String processorId, String branch, String trunk, long lastBundleIndex, long lastTransactionIndex, long nextAddressIndex) {
         StoredBundle bundle = databaseProvider.getLastConfirmedBundle();
         long bundleId = bundle == null ? 0 : bundle.getBundleId() + 1;//increment last id by one, or set it to 0 if this is first bundle
         ProcessorTransaction first = databaseProvider.getNextProcessorTransaction(processorId, lastBundleIndex + 1);
         System.out.println("first: " + first);
-        boolean started = databaseProvider.startBundle(bundleId, processorId, first.getUniqueId(), branch, trunk, lastTransactionIndex);
+        boolean started = databaseProvider.startBundle(bundleId, processorId, first.getUniqueId(), branch, trunk, lastTransactionIndex, nextAddressIndex);
         if (started) {
             System.out.println("Started bundle " + bundleId);
         } else

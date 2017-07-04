@@ -12,6 +12,7 @@ import io.reactivex.Scheduler;
 import io.reactivex.schedulers.Schedulers;
 import jota.model.Transaction;
 import jota.utils.Converter;
+import jota.utils.InputValidator;
 
 import java.util.concurrent.TimeUnit;
 
@@ -114,6 +115,8 @@ public class Backend {
             }
             long payout = getPayoutPerRequest();
             databaseProvider.setTokensReceived(user, payout);
+            if (!InputValidator.isAddress(user.getWalletAddress()))
+                return new HandleRewardResponse(-1, "This is not an address.");
             StoredTransaction transaction = databaseProvider.addTransaction(user.getWalletAddress(), payout);
             if (transaction == null)
                 return new HandleRewardResponse(-3, "Received a null transaction from databaseProvider");

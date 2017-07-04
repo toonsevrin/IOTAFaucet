@@ -1,10 +1,12 @@
 package com.sevrin.toon.IOTAFaucet.web;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.sevrin.toon.IOTAFaucet.User;
 import com.sevrin.toon.IOTAFaucet.backend.Backend;
 import com.sevrin.toon.IOTAFaucet.backend.DoWorkRes;
 import com.sevrin.toon.IOTAFaucet.backend.HandleRewardResponse;
+import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.PublishSubject;
 import io.reactivex.subjects.Subject;
 import io.reactivex.subscribers.SerializedSubscriber;
@@ -79,14 +81,20 @@ public class Frontend {
         public WorkWebsocket(Backend backend) {
             backend.getWorkObservable(workResponses).subscribe((req) -> {
                 String msg = GSON.toJson(req);
-                sessions.parallelStream().forEach(session -> {
-                    try {
-                        session.getRemote().sendString(msg);
-                        System.out.println("Send msg to session");
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                });
+                int offset = 0;
+                for (Session session : sessions) {
+                    final int finalOffset = ++offset;
+                    Schedulers.io().scheduleDirect(()-> {
+                        try {
+                            JsonObject finalMsg = GSON.fromJson(msg, JsonObject.class);
+                            finalMsg.addProperty("offset", finalOffset);
+                            session.getRemote().sendString(GSON.toJson(finalMsg));
+                            System.out.println("Send message to a session");
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    });
+                }
             });
 
         }

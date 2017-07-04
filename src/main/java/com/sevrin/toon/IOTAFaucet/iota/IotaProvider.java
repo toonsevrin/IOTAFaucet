@@ -110,17 +110,20 @@ public class IotaProvider {
     public Integer getFirstAddressWithFunds() throws InvalidAddressException, InvalidSecurityLevelException {
         return iotaAPI.getInputs(seed, 2, 0, 300, 1).getInput().get(0).getKeyIndex();
     }
+
     public String searchConfirmedTransactionHash() throws NoNodeInfoException {
-        return (searchConfirmedTransactionHash(getNewBranchTransaction()));
+        return (searchConfirmedTransactionHash(getNewBranchTransaction(), 15));
     }
-    public String searchConfirmedTransactionHash(String txHash) throws NoNodeInfoException {
-        if (iotaAPI.getLatestInclusion(new String[]{txHash}).getStates()[0])
+
+    public String searchConfirmedTransactionHash(String txHash, int remainingDepth) throws NoNodeInfoException {
+        if (iotaAPI.getLatestInclusion(new String[]{txHash}).getStates()[0] && remainingDepth <= 0)
             return txHash;
         String transaction = getNewBranchTransaction();
         List<Transaction> transactions = iotaAPI.getTransactionsObjects(new String[]{transaction});
         if (transactions == null || transactions.size() == 0 || transactions.get(0).getTrunkTransaction() == null || transactions.get(0).getTrunkTransaction().equals(SPAM_ADDRESS))
-            return searchConfirmedTransactionHash(getNewBranchTransaction());
-        return (transactions.get(0).getTrunkTransaction());
+            return searchConfirmedTransactionHash(getNewBranchTransaction(), 15);
+        remainingDepth--;
+        return searchConfirmedTransactionHash(transactions.get(0).getTrunkTransaction(), remainingDepth);
     }
 
     public void broadcastAndStore(String... finalizedTransactionTrytes) throws BroadcastAndStoreException {
@@ -148,6 +151,7 @@ public class IotaProvider {
         return iotaAPI.getTransactionsToApprove(3);
     }
 
+    //FIX THIS SHIT
     public List<String> prepareTransaction(Iterable<StoredTransaction> transactions, int currentAddressIndex, String currentAddress, String remainderAddress) throws InvalidAddressException, InvalidSecurityLevelException, NotEnoughBalanceException, InvalidTransferException {
         List<Transfer> transfers = StreamSupport.stream(transactions.spliterator(), false)
                 .map(storedTransaction -> new Transfer(storedTransaction.getWalletAddress(), storedTransaction.getAmount(), "IOTAFAUCET9TRANSFER", TAG))

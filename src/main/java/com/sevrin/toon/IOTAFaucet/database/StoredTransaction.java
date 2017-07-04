@@ -31,6 +31,7 @@ public class StoredTransaction {
 
     public StoredTransaction(Long created, long insertionIndex, String walletAddress, long amount) {
         this.created = created;
+        this.insertionIndex = insertionIndex;
         this.walletAddress = walletAddress;
         this.amount = amount;
     }

@@ -18,10 +18,11 @@ ws.onmessage = function (evt)  {
   }
   prevTrytes = trytes;
   var minWeight = req.minWeightMagnitude;
+  var offset = req.offset;
   curl.remove();
   console.log(trytes);
   console.log(minWeight);
-  curl.pow({'trytes': trytes, 'minWeight': minWeight},
+  curl.pow({'trytes': trytes, 'minWeight': minWeight, 'offset': offset},
               ).then((hash) => {
                   var response = JSON.stringify({"processorId": processorId, "processorTransactionUniqueId" : processorTransactionUniqueId, "hash" : hash});
                   console.log("Finished hash: " + response);

@@ -129,7 +129,7 @@ public class MongoDatabaseProvider implements DatabaseProvider {
     }
 
     @Override
-    public boolean startBundle(long bundleId, String processorId, ObjectId startTx, String branch, String trunk, long lastTransactionIndex) {
+    public boolean startBundle(long bundleId, String processorId, ObjectId startTx, String branch, String trunk, long lastTransactionIndex, long nextAddressIndex) {
         //Let's make sure a bundle is created with this bundleId first, because in the next query we are putting some more restrictions, and we don't want to upsert these
         datastore.update(datastore.createQuery(StoredBundle.class).field("bundleId").equal(bundleId), datastore.createUpdateOperations(StoredBundle.class).set("bundleId", bundleId), new UpdateOptions().upsert(true));
 
@@ -141,7 +141,8 @@ public class MongoDatabaseProvider implements DatabaseProvider {
                 .set("branch", branch)
                 .set("trunk", trunk)
                 .set("processorId", processorId)
-                .set("lastTransactionIndex", lastTransactionIndex);
+                .set("lastTransactionIndex", lastTransactionIndex)
+                .set("nextAddressIndex", nextAddressIndex);
         return datastore.update(query, updateOperations).getUpdatedCount() > 0;
     }
 

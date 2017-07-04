@@ -1,3 +1,11 @@
 <h1>confirming...</h1>
 
 <h2>$message</h2>
+
+<h2>Returning to home....</h2>
+
+<script>
+ setTimeout(function () {
+            window.location.href = '/';
+    }, 5000);
+</script>

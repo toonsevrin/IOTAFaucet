@@ -26,6 +26,8 @@ public class ConfirmLoop implements Runnable {
                 ProcessorTransaction transaction = databaseProvider.getProcessorTransactions(storedBundle.getProcessor()).iterator().next();
                 String hash = new Transaction(transaction.getHashedTrytes()).getHash();
                 if (iotaProvider.isBundleConfirmed(new String[]{hash})) {
+                    if(!updateLastIndex(storedBundle.getNextAddressIndex()))
+                        System.out.println("ConfirmLoop: Address already updated?");
                     if(databaseProvider.confirmBundle(storedBundle.getBundleId()))
                         System.out.println("Confirmed bundle " + storedBundle.getBundleId());
                     else
@@ -36,5 +38,9 @@ public class ConfirmLoop implements Runnable {
                 e.printStackTrace();
             }
         }
+    }
+
+    private boolean updateLastIndex(long index){
+        return databaseProvider.setLastKnownAddressIndex(iotaProvider.getSeed(), index);
     }
 }
